@@ -6,7 +6,7 @@ import {spawnSync} from 'node:child_process';
 import {getDb,REPO_ROOT} from './lib/db.mjs';
 import {migrate} from './migrate.mjs';
 import {seed} from './seed.mjs';
-import {execute,prepareImport,commands} from './survey.mjs';
+import {execute,prepareImport,commands,format} from './survey.mjs';
 import {analyse,base} from './lib/analyse.mjs';
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'survey-smoke-'));
 process.env.DATABASE_URL='';process.env.DATA_DIR=path.join(temp,'db');
@@ -19,7 +19,7 @@ try{
  await migrate(db);assert.equal((await migrate(db)).ran.length,0);await seed(db);await seed(db);assert.equal((await run('studies')).length,2);
  const health=await run('datasets');assert.equal(health.find(r=>r.dataset==='November wave').total_cases,16);
  const d='--dataset=November wave';const summary=await run('frequencies',d,'--variable=choice');assert.equal(summary.length,2);assert.ok(Math.abs(summary.reduce((s,r)=>s+r.percent,0)-100)<0.00001);
- const cross=await run('crosstab',d,'--variable=choice','--by=region');assert.equal(cross.length,4);assert.equal(cross.find(r=>r.group==='North'&&r.category==='Store').count,2);
+ const cross=await run('crosstab',d,'--variable=choice','--by=region');assert.equal(cross.length,4);assert.ok(format(cross).indexOf('percent')<format(cross).indexOf('weighted base'));checks++;assert.equal(cross.find(r=>r.group==='North'&&r.category==='Store').count,2);
  const nums=await run('numeric',d,'--variable=rating');assert.equal(nums[0].base,15);assert.equal(nums[0].missing,1);
  assert.equal((await run('weight-check',d))[0].effective_base,14.4);
  assert.equal((await run('missingness',d)).find(r=>r.variable==='rating').missing,1);
