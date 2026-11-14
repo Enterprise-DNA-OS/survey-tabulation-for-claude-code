@@ -1,0 +1,12 @@
+Case ID,Region,Choice,Rating,Weight,Comment
+F01,North,Online,5,1,"Fast, clear"
+F02,North,Store,4,2,Helpful
+F03,North,Online,3,1,Useful
+F04,North,Store,2,1,Slow
+F05,North,Online,1,1,Limited
+F06,South,Store,5,2,Helpful
+F07,South,Online,4,2,Useful
+F08,South,Store,3,2,Clear
+F09,South,Online,2,2,Slow
+F10,South,Online,,2,No rating
+F11,South,Store,1,0,Zero weight

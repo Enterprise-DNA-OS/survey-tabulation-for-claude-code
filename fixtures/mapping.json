@@ -1,0 +1,25 @@
+{
+  "id": "Case ID",
+  "weight": "Weight",
+  "variables": [
+    {
+      "name": "region",
+      "column": "Region",
+      "kind": "categorical"
+    },
+    {
+      "name": "choice",
+      "column": "Choice",
+      "kind": "categorical"
+    },
+    {
+      "name": "rating",
+      "column": "Rating",
+      "kind": "numeric",
+      "missing": [
+        "",
+        "Not asked"
+      ]
+    }
+  ]
+}

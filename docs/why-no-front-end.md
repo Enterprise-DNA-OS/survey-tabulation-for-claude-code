@@ -1,24 +1,7 @@
-# Why there is no front end
+# Why this desk has no front end
 
-Q Research Software is a database with a subscription. The tables underneath it are ordinary: a few entities, a few relationships, a handful of workflows you repeat every week. What you pay for is the layer on top that lets people who do not write SQL get at those tables. Screens, filters, dashboards, forms.
+A researcher can ask for a wave comparison, inspect the source and keep the result without a separate application. The database holds the records. The coding agent runs the documented commands. Read-only HTML provides the review queue and research paperwork in the business brand.
 
-That layer used to be the whole product, because talking to a database was hard. It is not hard any more. Open this folder in Claude Code, describe what you want, and it writes the query, runs it, and explains the answer. Ask a question the dashboard never had a chart for and you still get an answer.
+Q also provides specialist statistical methods, interactive charts and Office reporting. This build supplies a narrower descriptive tabulation workflow. It does not recreate that full statistical suite. A visual application gives point-and-click recoding, drag-and-drop charts, live collaborative editing and a familiar analyst workspace. This desk has no mobile app, offline synchronisation or live collection. Local data works without a database server, but coding-agent services can need a network.
 
-## What you gain
-
-- **Better answers.** A dashboard shows what the vendor decided to chart. Here you ask your own question, in your own words, and get it answered against your own data.
-- **No seats.** Everyone who needs to look can look. The bill does not grow with headcount.
-- **Your data in your Postgres.** Plain tables. Back them up, query them from anything, leave any time. There is no export step because there is nothing to leave.
-- **A process that matches you.** When your way of working changes, you add a command. You do not wait for a feature request to clear.
-
-## What you give up
-
-- **A visual board.** Stages are a table you ask about, not cards you drag.
-- **A phone app.** It runs where Claude Code runs.
-- **A vendor help desk.** This is open source. Enterprise DNA supports the installed version for businesses that want someone to call.
-
-## Who this fits
-
-Small teams who already use Claude Code, or who would rather learn to ask than learn another interface. If your team needs a screen to look at all day, keep Q Research Software. If you need the answers more than the screens, this is cheaper, faster and yours.
-
-Installed and run for you: https://enterprisedna.co/omni/instead-of/q-research
+If those features are requirements, Enterprise DNA scopes them for the customised version before migration. Keep the current process until source counts and known estimates agree. The open-source code has no per-seat fee. Hosting, agent subscriptions and operating support still cost money.

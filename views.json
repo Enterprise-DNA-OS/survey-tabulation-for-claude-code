@@ -1,13 +1,26 @@
 [
   {
     "name": "week",
-    "title": "This week",
-    "subtitle": "Survey Tabulation for Claude Code: what needs attention, rendered by npm run view",
+    "title": "Research review",
+    "subtitle": "Internal working records. Review disclosure risk before sharing.",
     "sections": [
       {
+        "title": "Wave health",
+        "sql": "select study,dataset,total_cases,active_cases,excluded_cases,zero_weight_cases,effective_base from dataset_health order by study,dataset"
+      },
+      {
         "title": "Needs attention",
-        "note": "TODO(author): point this at the industry's attention view (overdue, stuck, quiet).",
-        "sql": "select 'replace me' as item, 'TODO(author)' as why"
+        "sql": "select study,rule,action from study_attention order by study,rule"
+      }
+    ]
+  },
+  {
+    "name": "analyses",
+    "title": "Analysis history",
+    "sections": [
+      {
+        "title": "Saved estimates and freshness",
+        "sql": "select study,dataset,name,revision,current_revision,stale,actor,created_at from analysis_history order by created_at"
       }
     ]
   }

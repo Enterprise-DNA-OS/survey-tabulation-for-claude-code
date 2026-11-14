@@ -1,115 +1,106 @@
-<h1 align="center">Survey Tabulation for Claude Code</h1>
+# Survey Tabulation for Claude Code
 
-<p align="center">
-  <strong>The open-source survey tabulation system that is just a database and Claude Code.</strong>
-</p>
+Own the records and rules behind your survey summaries. Bring Q Research Software CSV exports into a database, compare weighted responses and retain the evidence behind each result.
 
-<p align="center">
-  Created by <a href="https://www.enterprisedna.co"><strong>Enterprise DNA</strong></a>. Free and open source. Works with Claude Code, Codex, OpenCode or Cursor.
-</p>
+## Three ways to use it
 
-<!-- three-doors -->
-<table align="center">
-  <tr>
-    <td align="center"><strong>Do it yourself</strong><br/>Clone it, run it, own it. Free, MIT.<br/><a href="#quick-start">Quick start</a></td>
-    <td align="center"><strong>We customise it</strong><br/>Your fields, your rules, your Q Research Software data brought across.<br/><a href="https://enterprisedna.co/omni/book/?utm_source=github&utm_medium=readme&utm_campaign=q-research">Book a call</a></td>
-    <td align="center"><strong>We run it for you</strong><br/>Installed, connected and operated inside Omni. Setup fee, then a retainer.<br/><a href="https://enterprisedna.co/omni/instead-of/q-research?utm_source=github&utm_medium=readme&utm_campaign=q-research">How it works</a></td>
-  </tr>
-</table>
+- **Do it yourself:** free MIT source. Run with Claude Code, Codex, OpenCode or Cursor.
+- **We customise it:** Enterprise DNA maps your questions, weights and reporting rules. One setup fee, then a retainer.
+- **We run it for you:** installed and operated through **Omni by Enterprise DNA**. One setup fee, then a retainer. [Talk to Sam](https://enterprisedna.co/omni/book?offer=replace-software&utm_campaign=q-research&utm_medium=readme).
 
-<p align="center">
-  <a href="#what-is-this">What is this</a> &bull;
-  <a href="#why-no-front-end">Why no front end</a> &bull;
-  <a href="#quick-start">Quick start</a> &bull;
-  <a href="#the-commands">Commands</a> &bull;
-  <a href="#instead-of-q-research">Instead of Q Research Software</a> &bull;
-  <a href="#want-it-installed-and-run-for-you">Installed for you</a> &bull;
-  <a href="#license">License</a>
-</p>
+## Start with fictional records
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Node-20+-339933?style=flat-square" alt="Node 20+" />
-  <img src="https://img.shields.io/badge/PostgreSQL-any-336791?style=flat-square" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/PGlite-embedded-3ecf8e?style=flat-square" alt="PGlite" />
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License" />
-</p>
-
----
-
-## What is this
-
-Survey Tabulation for Claude Code does the job you pay Q Research Software for, as a Postgres database and a set of agent commands. There is no web front end. You open the folder in [Claude Code](https://claude.com/claude-code) (or Codex, OpenCode, Cursor: see `AGENTS.md`) and ask for what you want in plain language. It runs the right query, and it can answer questions the Q Research Software dashboard cannot.
-
-<!-- TODO(author): the annual bill. One sentence: what a 10 to 50 person business typically pays Q Research Software per year, all in, with a source. -->
-
-Want the same thing with a web front end, or built on a different stack? That is a customisation, and it is exactly what Enterprise DNA does: [book a call](https://enterprisedna.co/omni/book/?utm_source=github&utm_medium=readme&utm_campaign=q-research).
-
-<!-- TODO(author): two or three sentences on what this specific product covers and who it is for. -->
-
-## Why no front end
-
-- The front end was only ever there because the database was hard to talk to. That is no longer true.
-- Your data sits in plain Postgres tables you own. Any tool can read them. No export, no lock-in.
-- No seats, no tiers, no add-ons. Read [docs/why-no-front-end.md](docs/why-no-front-end.md) for the honest trade-offs too.
-
-## Quick start
-
-Sixty seconds, no database install (an embedded Postgres runs inside Node):
+Node 20 or newer. PGlite runs locally. DATABASE_URL selects PostgreSQL.
 
 ```bash
-git clone https://github.com/Enterprise-DNA-OS/survey-tabulation-for-claude-code.git
-cd survey-tabulation-for-claude-code
 npm install
 npm run demo
+npm run survey -- datasets
+npm run survey -- crosstab --dataset="November wave" --variable=choice --by=region
+npm run survey -- numeric --dataset="November wave" --variable=rating
+npm run survey -- weight-check --dataset="November wave"
+npm run survey -- weekly-review --json
+npm run view
+npm run docs
+npm test
 ```
 
-Then open the folder in Claude Code and type a slash command. <!-- TODO(author): name the first command to try. -->
+The demo has two synthetic waves, missing ratings, a stale source export and a study with overdue reviews. Seed is idempotent. Use an empty local database. This is a descriptive survey tabulation desk, not a full replacement for Q's modelling, significance testing or Office automation.
 
-### Use it with your own Postgres or Supabase
+## The research week
 
-Copy `.env.example` to `.env`, set `DATABASE_URL`, then `npm run migrate`. Same commands, shared data, no per-seat fee.
+Reconcile each wave with /datasets. Review /missingness and /weight-check before /frequencies, /crosstab or /numeric. Use /trend only after checking that question and category definitions agree. /weekly-review gathers overdue reviews and stale findings. /save-analysis records a result snapshot and /draft-report writes an internal paper without sending it.
 
-## The commands
+[Methods](docs/methods.md) defines denominators, low-base masking and the limits of weighted estimates. [Import guide](docs/replace-q-research.md) shows the one-command CSV path. [Compliance](docs/compliance.md) cites the NZ privacy principles used for evidence checks.
 
-<!-- TODO(author): a table of the slash commands in .claude/commands and what each one does. -->
+## Ten questions the desk answers today
 
-| Command | What it does |
-|---|---|
-| `/...` | ... |
+1. Which wave has the most missing ratings?
+2. How does weighted channel preference differ by region?
+3. How much do weights reduce the effective base?
+4. Which saved findings became stale after an exclusion?
+5. Which source exports are more than 30 days old?
+6. Which studies lack purpose or review evidence?
+7. What changed between two waves with the same response definitions?
+8. Which respondents were excluded and why?
+9. What exact specification produced this saved result?
+10. Which zero-weight responses remain in the source count?
 
-## Instead of Q Research Software
+Q supports custom analysis too. These are working examples for this build, not claims that Q cannot calculate them. Detail, audit and export retain the source evidence needed to investigate exclusions and estimates.
 
-<!-- TODO(author): how to bring data across from Q Research Software; link docs/replace-q-research.md -->
+## Commands
 
-## Architecture
+- /help: Read the available commands and flags.
+- /studies: Review study owners, purpose and review dates.
+- /datasets: Reconcile survey waves and respondent counts.
+- /detail: Read a wave and its review notes before changing it.
+- /cases: Review respondent IDs, weights, exclusions and reasons.
+- /variables: Read the mapped variable types before choosing an analysis.
+- /frequencies: Produce weighted category shares, with missing values excluded from the denominator.
+- /crosstab: Compare a response by a categorical segment. This is descriptive, not a significance test.
+- /numeric: Show a weighted mean and observed range.
+- /weight-check: Review zero weights, range and the weight-only effective base.
+- /missingness: Count missing answers among active respondents.
+- /attention: Review missing evidence, overdue reviews and old source exports.
+- /compliance: Read docs/compliance.md first. Report missing evidence against the cited principles. These checks do not certify compliance.
+- /weekly-review: Prepare the Monday wave reconciliation, review queue and stale-analysis list. Then read weight-check and missingness for the current wave.
+- /imports: Review source provenance, fingerprints and export dates.
+- /history: Read saved analyses and whether their source or policy changed.
+- /audit: Read operator-labelled changes. Labels are not authenticated identities.
+- /add-study: Register the authorised study and its actual purpose and review dates.
+- /update-study: Read studies first. Update supplied evidence or the small-base policy, recording why. Every saved analysis for this study becomes stale.
+- /import: Read docs/replace-q-research.md. Map the actual CSV headings and inspect the dry run. Repeat without --dry-run only after reconciling source counts.
+- /exclude: Read detail. Exclude a case for an operator-supplied reason, keeping its original data. Saved results become stale.
+- /restore: Read detail and audit. Restore an excluded case with a reason. Saved results become stale.
+- /log: Record the actual research review, not an invented decision.
+- /save-analysis: Review the current evidence and specification. Save an immutable result snapshot.
+- /draft-report: Choose a current saved analysis from history. Draft locally. Review sampling, missingness, weighting and disclosure before any release. Never send.
+- /export: Create a private full archive. It contains respondent records and raw source columns. Do not put it in git or share it publicly. Existing files cannot be overwritten.
+- /trend: Compare the same variable across dated waves. Check wording, category definitions and samples first. Differences are descriptive, not causal or significance claims.
+- /customise: Add a field or change an operating rule with a migration and tests.
+- /new-view: Add a read-only branded view from the database.
 
-```
-survey-tabulation-for-claude-code/
-  CLAUDE.md                 how the operator wants this run (routing table + house rules)
-  AGENTS.md                 the same, for Codex / OpenCode / Cursor / Gemini CLI
-  .claude/commands/         the slash commands
-  scripts/                  the CLI the commands drive
-  scripts/lib/db.mjs        one adapter: DATABASE_URL (pg) or embedded PGlite
-  supabase/migrations/      plain SQL schema
-  supabase/seed.sql         demo data
-  docs/                     the thesis and the migration guide
-```
+Every CLI command supports --json. Names match without case and IDs accept prefixes. Ambiguous matches list candidates and exit 1. Writes require --actor except file-only drafts and exports. Saved analyses are immutable. Source exclusions, restores and study policy updates invalidate them. Unknown flags fail.
 
-## Built for coding agents
+## Documents and views
 
-The database, CLI and command recipes work with Claude Code, Codex, OpenCode or Cursor. Ask your coding agent for a new command and have it implement and test the change against the same records.
+Edit brand.json, then run npm run docs for study review records and saved analysis records. npm run view renders wave health, overdue reviews and analysis history. Generated files are internal snapshots and stay out of git. Rerender after changes. [Why no front end](docs/why-no-front-end.md).
 
-## Contributing
+## Your first hour: ten things to ask for
 
-Issues and pull requests are welcome. Keep the shape: plain SQL, a small CLI, a slash command per recurring job, no front end.
+1. Put our business name on the research pack.
+2. List the latest survey waves.
+3. Show missing responses by variable.
+4. Explain the weight-only effective base.
+5. Compare channel preference by region.
+6. Check overdue study reviews.
+7. Preview a Q export before import.
+8. Record why a respondent was excluded.
+9. Save a result and draft its internal report.
+10. Add our study reference field with /customise.
 
-## Want it installed and run for you?
+## Scope and operation
 
-Enterprise DNA installs Survey Tabulation for Claude Code for your business, migrates your Q Research Software data, connects it to the rest of your tools, and runs it for you as part of **Omni**, our managed Command Center. One setup fee, then a monthly retainer.
+The build does not collect surveys, send invitations or certify lawful use. It does not recreate Q's advanced statistical engine. Review [operations](docs/operations.md) before shared deployment and [research](docs/research.md) for the target evidence. Retain Q until the required analysis and source reconciliation are accepted. Agent subscriptions, hosting and operation remain your costs.
 
-- Book a call: [enterprisedna.co/omni/book](https://enterprisedna.co/omni/book/?offer=replace-software&utm_source=github&utm_medium=readme&utm_campaign=q-research)
-- Read more: [enterprisedna.co/omni/instead-of/q-research](https://enterprisedna.co/omni/instead-of/q-research?utm_source=github&utm_medium=readme&utm_campaign=q-research)
-
-## License
-
-MIT. Copyright (c) 2026 Enterprise DNA.
+MIT. Not affiliated with Q Research Software, Displayr or Anthropic.

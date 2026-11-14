@@ -1,11 +1,50 @@
 [
   {
-    "name": "example",
-    "title": "TODO(author): the first document this industry must produce",
-    "for_each": "select gen_random_uuid() as id, 'Example' as name",
+    "name": "study-review",
+    "title": "Study review record",
+    "for_each": "select id,name from studies",
     "file": "name",
     "sections": [
-      { "title": "Details", "sql": "select 'replace me' as item, $1::text as record_id" }
+      {
+        "title": "Purpose and reviews",
+        "layout": "record",
+        "sql": "select name,owner,purpose,accuracy_review,retention_review,min_base from studies where id=$1"
+      },
+      {
+        "title": "Wave reconciliation",
+        "sql": "select dataset,total_cases,active_cases,excluded_cases,zero_weight_cases,effective_base from dataset_health where study_id=$1"
+      },
+      {
+        "title": "Review findings",
+        "sql": "select rule,action from study_attention where id=$1"
+      },
+      {
+        "title": "Review notes",
+        "sql": "select body,actor,created_at from notes where study_id=$1"
+      }
+    ]
+  },
+  {
+    "name": "analysis-record",
+    "title": "Saved analysis record",
+    "for_each": "select id,name from analysis_runs",
+    "file": "name",
+    "sections": [
+      {
+        "title": "Source and freshness",
+        "note": "Internal research record, not approved for disclosure. A stale result must be rerun.",
+        "layout": "record",
+        "sql": "select study,dataset,name,revision,current_revision,stale,actor,created_at from analysis_history where id=$1"
+      },
+      {
+        "title": "Specification",
+        "layout": "record",
+        "sql": "select specification from analysis_runs where id=$1"
+      },
+      {
+        "title": "Saved estimates",
+        "sql": "select x->>'group' as segment,x->>'category' as category,x->>'base' as unweighted_base,x->>'weighted_base' as weighted_base,x->>'effective_base' as effective_base,x->>'percent' as percent,x->>'mean' as mean,x->>'status' as status from analysis_runs a cross join lateral jsonb_array_elements(a.result) x where a.id=$1"
+      }
     ]
   }
 ]

@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {getDb,REPO_ROOT} from './lib/db.mjs';
+import {migrate} from './migrate.mjs';
+import {seed} from './seed.mjs';
+import {execute,prepareImport,commands} from './survey.mjs';
+import {analyse,base} from './lib/analyse.mjs';
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'survey-smoke-'));
+process.env.DATABASE_URL='';process.env.DATA_DIR=path.join(temp,'db');
+const db=await getDb();let checks=0;const seen=new Set();
+const run=async(cmd,...args)=>{seen.add(cmd);const r=await execute(db,[cmd,...args]);checks++;return r;};
+const reject=async(args,re)=>{await assert.rejects(()=>execute(db,args),re);checks++;};
+const file=(name,value)=>{const p=path.join(temp,name);fs.writeFileSync(p,value);return p;};
+let draftFile;
+try{
+ await migrate(db);assert.equal((await migrate(db)).ran.length,0);await seed(db);await seed(db);assert.equal((await run('studies')).length,2);
+ const health=await run('datasets');assert.equal(health.find(r=>r.dataset==='November wave').total_cases,16);
+ const d='--dataset=November wave';const summary=await run('frequencies',d,'--variable=choice');assert.equal(summary.length,2);assert.ok(Math.abs(summary.reduce((s,r)=>s+r.percent,0)-100)<0.00001);
+ const cross=await run('crosstab',d,'--variable=choice','--by=region');assert.equal(cross.length,4);assert.equal(cross.find(r=>r.group==='North'&&r.category==='Store').count,2);
+ const nums=await run('numeric',d,'--variable=rating');assert.equal(nums[0].base,15);assert.equal(nums[0].missing,1);
+ assert.equal((await run('weight-check',d))[0].effective_base,14.4);
+ assert.equal((await run('missingness',d)).find(r=>r.variable==='rating').missing,1);
+ assert.equal((await run('variables',d)).length,3);assert.equal((await run('detail',d)).study.name,'Harbour Shopper Study');
+ assert.equal((await run('trend','--study=Harbour','--variable=choice')).length,4);
+ assert.ok((await run('attention')).some(r=>r.rule==='source_stale'));assert.equal((await run('compliance')).length,4);assert.equal((await run('weekly-review')).datasets.length,2);
+ assert.equal((await run('cases',d)).length,16);await run('imports');await run('history');await run('audit');await run('help');
+ const actor='--actor=Test operator';await run('add-study','--name=Fixture Study','--owner=Owner','--purpose=Test','--accuracy-review=2099-01-01','--retention-review=2099-02-01',actor);
+ await run('log','--study=Fixture','--text=Reviewed synthetic data',actor);
+ const mapping=JSON.parse(fs.readFileSync(path.join(REPO_ROOT,'fixtures/mapping.json')));const csv=fs.readFileSync(path.join(REPO_ROOT,'fixtures/q-export.csv'),'utf8');
+ const imp=['q-research','--study=Fixture','--name=Fixture wave',`--file=${path.join(REPO_ROOT,'fixtures/q-export.csv')}`,`--map=${path.join(REPO_ROOT,'fixtures/mapping.json')}`,'--source=Synthetic','--exported-at=2026-01-01T00:00:00Z',actor];
+ assert.equal((await run('import',...imp,'--dry-run'))[0].cases,11);assert.equal((await run('datasets')).length,2);
+ assert.equal((await run('import',...imp))[0].status,'imported');assert.equal((await run('import',...imp))[0].status,'already imported');
+ const changed=file('changed.csv',csv.replace('F01','F99'));await reject(['import',...imp.filter(x=>!x.startsWith('--file=')),`--file=${changed}`],/different input/);
+ const fw='--dataset=Fixture wave';const freq=await run('frequencies',fw,'--variable=choice');assert.equal(freq[0].base,10);assert.equal(freq.find(r=>r.category==='Online').weighted_count,9);assert.equal(freq.find(r=>r.category==='Online').percent,56.25);
+ assert.equal((await run('numeric',fw,'--variable=rating'))[0].weighted_base,14);
+ const result=(await run('save-analysis',fw,'--variable=choice','--name=Choice summary',actor))[0];const draft=(await run('draft-report',`--run=${result.id}`))[0];draftFile=draft.file;assert.match(fs.readFileSync(draft.file,'utf8'),/56.25/);
+ await run('exclude',fw,'--case=F01','--reason=Operator review',actor);assert.ok((await run('history')).find(r=>r.id===result.id).stale);await reject(['draft-report',`--run=${result.id}`],/stale/);
+ await run('restore',fw,'--case=F01','--reason=Review reversed',actor);assert.equal((await run('weight-check',fw))[0].base,10);
+ const second=(await run('save-analysis',fw,'--variable=choice','--name=Before policy',actor))[0];await run('update-study','--study=Fixture','--min-base=11','--reason=Small-base policy review',actor);assert.equal((await run('frequencies',fw,'--variable=choice'))[0].status,'low base');assert.ok((await run('history')).find(r=>r.id===second.id).stale);
+ await reject(['save-analysis','--dataset=October wave','--variable=choice','--name=No actor'],/actor/);
+ await run('update-study','--study=Fixture','--retention-review=2020-01-01','--reason=Overdue test',actor);await reject(['save-analysis',fw,'--variable=choice','--name=Held',actor],/retention_review_due/);
+ await reject(['detail','--dataset=wave'],/Ambiguous.*datasets/s);await reject(['numeric',d,'--variable=choice'],/numeric variable/);await reject(['crosstab',d,'--variable=choice'],/--by/);await reject(['studies','--invented'],/Unknown flag/);
+ await reject(['add-study','--name=Bad','--owner=Owner','--purpose=Test','--accuracy-review=2026-02-30','--retention-review=2099-01-01',actor],/valid YYYY/);
+ for(const bad of [csv.replace('F02','F01'),csv.replace('5,1,','5,-1,'),csv.replace('5,1,','5,1e99,'),csv.replace('5,1,','1e99,1,'),csv.replace('5,1,','bad,1,'),csv.replace('Weight','Wrong'),csv+'"unterminated']){assert.throws(()=>prepareImport(bad,mapping));checks++;}
+ const before=(await run('datasets')).length;const bad=file('bad.csv',csv.replace('F02','F01'));await reject(['import',...imp.filter(x=>!x.startsWith('--file=')&&!x.startsWith('--name=')),'--name=Bad wave',`--file=${bad}`],/duplicate/);assert.equal((await run('datasets')).length,before);
+ const archive=path.join(temp,'archive.json');await run('export',`--out=${archive}`);const saved=JSON.parse(fs.readFileSync(archive));assert.equal(Object.keys(saved.records).length,7);assert.ok(saved.records.cases.some(r=>r.raw.Comment==='Fast, clear'));await reject(['export',`--out=${archive}`],/EEXIST/);
+ assert.deepEqual(base([]),{base:0,weighted_base:0,effective_base:0});assert.equal(analyse([{answers:{x:5},weight:0,excluded:false}],[{name:'x',kind:'numeric'}],{kind:'numeric',variable:'x'})[0].status,'low base');checks+=2;
+ for(const cmd of commands)assert.ok(seen.has(cmd),`Command not exercised: ${cmd}`);
+ const tables=await db.query("select tablename,rowsecurity from pg_tables where schemaname='public'");assert.ok(tables.every(t=>t.rowsecurity));checks++;
+ await db.close();
+ for(const script of ['view.mjs','docs.mjs']){const p=spawnSync(process.execPath,[path.join(REPO_ROOT,'scripts',script)],{cwd:REPO_ROOT,env:process.env,encoding:'utf8'});assert.equal(p.status,0,p.stderr);checks++;}
+ const cli=spawnSync(process.execPath,[path.join(REPO_ROOT,'scripts/survey.mjs'),'datasets','--json'],{cwd:REPO_ROOT,env:process.env,encoding:'utf8'});assert.equal(cli.status,0,cli.stderr);assert.equal(JSON.parse(cli.stdout).length,3);checks++;
+ console.log(`PASS: ${checks} checks, ${commands.length} CLI commands, imports, arithmetic, holds, invalidation, rendering and JSON CLI`);
+}catch(e){try{await db.close();}catch{}throw e;}finally{if(draftFile)fs.rmSync(draftFile,{force:true});fs.rmSync(temp,{recursive:true,force:true});}
